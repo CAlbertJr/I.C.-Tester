@@ -1,13 +1,13 @@
 
-## Arduino Mega IC Tester [1] 
-An automated, hardware-based integrated circuit (IC) tester built using the Arduino Mega 2560. This project allows you to quickly verify the functionality of various digital logic gates, multiplexers, flip-flops, and operational amplifiers by running automated truth-table and parametric tests. [2, 3, 4] 
+## Arduino Mega IC Tester 
+An automated, hardware-based integrated circuit (IC) tester built using the Arduino Mega 2560. This project allows you to quickly verify the functionality of various digital logic gates, multiplexers, flip-flops, and operational amplifiers by running automated truth-table and parametric tests. 
 ## 🚀 Features
 
 * Broad IC Support: Tests 74xx series TTL, 40xx series CMOS, and various common ICs.
 * Auto-Detection: Automatically identifies unknown ICs by scanning pin configurations.
 * Massive I/O Capacity: Utilizes the Arduino Mega's 54 digital pins to test up to 24-pin ICs without external multiplexers.
 * User Interface: Features an optional 16x2 LCD screen/OLED display and a 4x4 matrix keypad for standalone operation.
-* Serial Monitoring: Detailed pass/fail reports sent directly to your PC via USB Serial. [5, 6, 7, 8, 9] 
+* Serial Monitoring: Detailed pass/fail reports sent directly to your PC via USB Serial. 
 
 ## 🛠️ Hardware Requirements
 
