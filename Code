@@ -1,0 +1,437 @@
+#include <LiquidCrystal.h>
+
+// Initialize the LCD (pins for Mega 2560 with LCD keypad shield)
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+const int buttonPin = A0; // Analog pin for reading the button
+
+// Define button thresholds for keypad shield
+const int btnRIGHT = 0;
+const int btnUP = 100;
+const int btnDOWN = 200;
+const int btnLEFT = 300;
+const int btnSELECT = 400;
+const int btnNONE = 1023;
+
+// Variables for IC type
+enum ICTypes { IC7400, IC7402, IC7404, IC7408, IC7432, IC4001, IC4011, IC4069, IC4071, IC4081 };
+ICTypes icType = IC7400;  // Default IC type
+const int totalICs = 10;  // Total number of ICs
+
+// Function prototypes
+void test7400();
+void test7402();
+void test7404();
+void test7408();
+void test7432();
+void test4001();
+void test4011();
+void test4069();
+void test4071();
+void test4081();
+int readLCDButtons();
+
+void setup() {
+  lcd.begin(16, 2); // Initialize the LCD with 16 columns and 2 rows
+  lcd.print("IC Tester Ready");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+  lcd.setCursor(0, 0);
+  lcd.print("Select IC: ");
+
+  // Display current IC type
+  switch (icType) {
+    case IC7400: lcd.print("7400 NAND"); break;
+    case IC7402: lcd.print("7402 NOR"); break;
+    case IC7404: lcd.print("7404 NOT"); break;
+    case IC7408: lcd.print("7408 AND"); break;
+    case IC7432: lcd.print("7432 OR"); break;
+    case IC4001: lcd.print("4001 NOR"); break;
+    case IC4011: lcd.print("4011 NAND"); break;
+    case IC4069: lcd.print("4069 NOT"); break;
+    case IC4071: lcd.print("4071 OR"); break;
+    case IC4081: lcd.print("4081 AND"); break;
+  }
+
+  // Wait for user input
+  int lcd_key = readLCDButtons();
+  if (lcd_key == btnSELECT) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Testing...");
+
+    // Run test based on selected IC type
+    switch (icType) {
+      case IC7400: test7400(); break;
+      case IC7402: test7402(); break;
+      case IC7404: test7404(); break;
+      case IC7408: test7408(); break;
+      case IC7432: test7432(); break;
+      case IC4001: test4001(); break;
+      case IC4011: test4011(); break;
+      case IC4069: test4069(); break;
+      case IC4071: test4071(); break;
+      case IC4081: test4081(); break;
+    }
+
+    delay(3000);
+    lcd.clear();
+  } else if (lcd_key == btnRIGHT || lcd_key == btnDOWN) {
+    // Cycle through IC types
+    icType = (ICTypes)((icType + 1) % totalICs); // Increment and wrap around
+    delay(300);
+  } else if (lcd_key == btnLEFT || lcd_key == btnUP) {
+    // Scroll to the previous IC
+    icType = (ICTypes)((icType - 1 + totalICs) % totalICs); // Decrement and wrap around
+    delay(300);
+  }
+
+}
+
+// 7400 - Quad 2-input NAND gate
+void test7400() {
+  lcd.setCursor(0, 1);
+  bool pass = true;
+  String failureMessage = "";
+
+  // Gate 1 (Pins: A=52, B=53, Y=50)
+  pinMode(52, OUTPUT);
+  pinMode(53, OUTPUT);
+  pinMode(50, INPUT);
+ 
+  pinMode(51, OUTPUT);
+  pinMode(48, OUTPUT);
+  pinMode(49, INPUT);
+
+  pinMode(22, OUTPUT);
+  pinMode(23, OUTPUT);
+  pinMode(24, INPUT);
+
+  pinMode(25, OUTPUT);
+  pinMode(26, OUTPUT);
+  pinMode(27, INPUT);
+
+  digitalWrite(52, LOW); digitalWrite(53, LOW); if (digitalRead(50) != HIGH) pass = false;
+  digitalWrite(52, LOW); digitalWrite(53, HIGH); if (digitalRead(50) != HIGH) pass = false;
+  digitalWrite(52, HIGH); digitalWrite(53, LOW); if (digitalRead(50) != HIGH) pass = false;
+  digitalWrite(52, HIGH); digitalWrite(53, HIGH); if (digitalRead(50) != LOW) pass = false;
+
+  digitalWrite(51, LOW); digitalWrite(48, LOW); if (digitalRead(49) != HIGH) pass = false;
+  digitalWrite(51, LOW); digitalWrite(48, HIGH); if (digitalRead(49) != HIGH) pass = false;
+  digitalWrite(51, HIGH); digitalWrite(48, LOW); if (digitalRead(49) != HIGH) pass = false;
+  digitalWrite(51, HIGH); digitalWrite(48, HIGH); if (digitalRead(49) != LOW) pass = false;
+
+  digitalWrite(22, LOW); digitalWrite(23, LOW); if (digitalRead(24) != HIGH) pass = false;
+  digitalWrite(22, LOW); digitalWrite(23, HIGH); if (digitalRead(24) != HIGH) pass = false;
+  digitalWrite(22, HIGH); digitalWrite(23, LOW); if (digitalRead(24) != HIGH) pass = false;
+  digitalWrite(22, HIGH); digitalWrite(23, HIGH); if (digitalRead(24) != LOW) pass = false;
+
+  digitalWrite(25, LOW); digitalWrite(26, LOW); if (digitalRead(27) != HIGH) pass = false;
+  digitalWrite(25, LOW); digitalWrite(26, HIGH); if (digitalRead(27) != HIGH) pass = false;
+  digitalWrite(25, HIGH); digitalWrite(26, LOW); if (digitalRead(27) != HIGH) pass = false;
+  digitalWrite(25, HIGH); digitalWrite(26, HIGH); if (digitalRead(27) != LOW) pass = false;
+
+
+  // Other gates in the 7400 would follow similar logic, updating pin numbers
+
+  //lcd.print(pass ? "7400: PASS" : "7400: FAIL");
+   // Display result
+  if (pass) {
+    lcd.print("7400: PASS");
+  } else {
+    lcd.print("Fail Gates: ");
+    lcd.setCursor(0, 1);
+    lcd.print(failureMessage);
+  }
+}
+
+// 7402 - Quad 2-input NOR gate
+void test7402() {
+  lcd.setCursor(0, 1);
+  bool pass = true;
+
+  // Gate 1 (Pins: A=52, B=53, Y=50)
+  pinMode(52, INPUT);
+  pinMode(53, OUTPUT);
+  pinMode(50, OUTPUT);
+ 
+  pinMode(51, INPUT);
+  pinMode(48, OUTPUT);
+  pinMode(49, OUTPUT);
+
+  pinMode(22, INPUT);
+  pinMode(23, OUTPUT);
+  pinMode(24, OUTPUT);
+
+  pinMode(25, INPUT);
+  pinMode(26, OUTPUT);
+  pinMode(27, OUTPUT);
+
+ 
+  digitalWrite(50, LOW); digitalWrite(53, LOW); if (digitalRead(52) == LOW) pass = false;
+  digitalWrite(50, LOW); digitalWrite(53, HIGH); if (digitalRead(52) == HIGH) pass = false;
+  digitalWrite(50, HIGH); digitalWrite(53, LOW); if (digitalRead(52) == HIGH) pass = false;
+  digitalWrite(50, HIGH); digitalWrite(53, HIGH); if (digitalRead(52) == HIGH) pass = false;
+
+  digitalWrite(49, LOW); digitalWrite(48, LOW); if (digitalRead(51) == LOW) pass = false;
+  digitalWrite(49, LOW); digitalWrite(48, HIGH); if (digitalRead(51) == HIGH) pass = false;
+  digitalWrite(49, HIGH); digitalWrite(48, LOW); if (digitalRead(51) == HIGH) pass = false;
+  digitalWrite(49, HIGH); digitalWrite(48, HIGH); if (digitalRead(51) == HIGH) pass = false;
+
+  digitalWrite(24, LOW); digitalWrite(23, LOW); if (digitalRead(22) == LOW) pass = false;
+  digitalWrite(24, LOW); digitalWrite(23, HIGH); if (digitalRead(22) == HIGH) pass = false;
+  digitalWrite(24, HIGH); digitalWrite(23, LOW); if (digitalRead(22) == HIGH) pass = false;
+  digitalWrite(24, HIGH); digitalWrite(23, HIGH); if (digitalRead(22) == HIGH) pass = false;
+
+  digitalWrite(27, LOW); digitalWrite(26, LOW); if (digitalRead(25) == LOW) pass = false;
+  digitalWrite(27, LOW); digitalWrite(26, HIGH); if (digitalRead(25) == HIGH) pass = false;
+  digitalWrite(27, HIGH); digitalWrite(26, LOW); if (digitalRead(25) == HIGH) pass = false;
+  digitalWrite(27, HIGH); digitalWrite(26, HIGH); if (digitalRead(25) == HIGH) pass = false;
+
+  // Other gates in the 7402 would follow similar logic, updating pin numbers
+
+  lcd.print(pass ? "7402: PASS" : "7402: FAIL");
+}
+
+// 7404 - Hex Inverter (NOT gate)
+void test7404() {
+  lcd.setCursor(0, 1);
+  bool pass = true;
+
+  // Gate 1 (Pins: A=1, Y=2)
+  pinMode(52, OUTPUT);
+  pinMode(53, INPUT);
+  
+  pinMode(50, OUTPUT);
+  pinMode(51, INPUT);
+
+  pinMode(48, OUTPUT);
+  pinMode(49, INPUT);
+
+  pinMode(22, OUTPUT);
+  pinMode(23, INPUT);
+
+  pinMode(24, OUTPUT);
+  pinMode(25, INPUT);
+
+  pinMode(26, OUTPUT);
+  pinMode(27, INPUT);
+
+  digitalWrite(52, LOW); if (digitalRead(53) != HIGH) pass = false;
+  digitalWrite(52, HIGH); if (digitalRead(53) != LOW) pass = false;
+
+  digitalWrite(50, LOW); if (digitalRead(51) != HIGH) pass = false;
+  digitalWrite(50, HIGH); if (digitalRead(51) != LOW) pass = false;
+
+  digitalWrite(48,LOW); if (digitalRead(49) != HIGH) pass = false;
+  digitalWrite(48, HIGH); if (digitalRead(49) != LOW) pass = false;
+
+  digitalWrite(22,LOW); if (digitalRead(23) != HIGH) pass = false;
+  digitalWrite(22, HIGH); if (digitalRead(23) != LOW) pass = false;
+
+  digitalWrite(24,LOW); if (digitalRead(25) != HIGH) pass = false;
+  digitalWrite(24, HIGH); if (digitalRead(25) != LOW) pass = false;
+  
+  digitalWrite(26,LOW); if (digitalRead(27) != HIGH) pass = false;
+  digitalWrite(26, HIGH); if (digitalRead(27) != LOW) pass = false;
+
+  lcd.print(pass ? "7404: PASS" : "7404: FAIL");
+}
+
+// 7408 - Quad 2-input AND gate
+void test7408() {
+  lcd.setCursor(0, 1);
+  bool pass = true;
+
+  // Gate 1 (Pins: A=1, B=2, Y=3)
+  pinMode(52, OUTPUT);
+  pinMode(53, OUTPUT);
+  pinMode(50, INPUT);
+  
+  pinMode(51, OUTPUT);
+  pinMode(48, OUTPUT);
+  pinMode(49, INPUT);
+
+  pinMode(22, OUTPUT);
+  pinMode(23, OUTPUT);
+  pinMode(24, INPUT);
+
+  pinMode(25, OUTPUT);
+  pinMode(26, OUTPUT);
+  pinMode(27, INPUT);
+
+  digitalWrite(52, LOW); digitalWrite(53, LOW); if (digitalRead(50) != LOW) pass = false;
+  digitalWrite(52, LOW); digitalWrite(53, HIGH); if (digitalRead(50) != LOW) pass = false;
+  digitalWrite(52, HIGH); digitalWrite(53, LOW); if (digitalRead(50) != LOW) pass = false;
+  digitalWrite(52, HIGH); digitalWrite(53, HIGH); if (digitalRead(50) != HIGH) pass = false;
+
+  digitalWrite(51, LOW); digitalWrite(48, LOW); if (digitalRead(49) != LOW) pass = false;
+  digitalWrite(51, LOW); digitalWrite(48, HIGH); if (digitalRead(49) != LOW) pass = false;
+  digitalWrite(51, HIGH); digitalWrite(48, LOW); if (digitalRead(49) != LOW) pass = false;
+  digitalWrite(51, HIGH); digitalWrite(48, HIGH); if (digitalRead(49) != HIGH) pass = false;
+
+  digitalWrite(22, LOW); digitalWrite(23, LOW); if (digitalRead(24) != LOW) pass = false;
+  digitalWrite(22, LOW); digitalWrite(23, HIGH); if (digitalRead(24) != LOW) pass = false;
+  digitalWrite(22, HIGH); digitalWrite(23, LOW); if (digitalRead(24) != LOW) pass = false;
+  digitalWrite(22, HIGH); digitalWrite(23, HIGH); if (digitalRead(24) != HIGH) pass = false;
+
+  digitalWrite(25, LOW); digitalWrite(26, LOW); if (digitalRead(27) != LOW) pass = false;
+  digitalWrite(25, LOW); digitalWrite(26, HIGH); if (digitalRead(27) != LOW) pass = false;
+  digitalWrite(25, HIGH); digitalWrite(26, LOW); if (digitalRead(27) != LOW) pass = false;
+  digitalWrite(25, HIGH); digitalWrite(26, HIGH); if (digitalRead(27) != HIGH) pass = false;
+  
+  // Other gates in the 7408 would follow similar logic, updating pin numbers
+
+  lcd.print(pass ? "7408: PASS" : "7408: FAIL");
+}
+
+// 7432 - Quad 2-input OR gate
+void test7432() {
+  lcd.setCursor(0, 1);
+  bool pass = true;
+
+  // Gate 1 (Pins: A=1, B=2, Y=3)
+  pinMode(52, OUTPUT);
+  pinMode(53, OUTPUT);
+  pinMode(50, INPUT);
+  
+  pinMode(51, OUTPUT);
+  pinMode(48, OUTPUT);
+  pinMode(49, INPUT);
+
+  pinMode(22, OUTPUT);
+  pinMode(23, OUTPUT);
+  pinMode(24, INPUT);
+
+  pinMode(25, OUTPUT);
+  pinMode(26, OUTPUT);
+  pinMode(27, INPUT);
+
+  
+  digitalWrite(52, LOW); digitalWrite(53, LOW); if (digitalRead(50) != LOW) pass = false;
+  digitalWrite(52, LOW); digitalWrite(53, HIGH); if (digitalRead(50) != HIGH) pass = false;
+  digitalWrite(52, HIGH); digitalWrite(53, LOW); if (digitalRead(50) != HIGH) pass = false;
+  digitalWrite(52, HIGH); digitalWrite(53, HIGH); if (digitalRead(50) != HIGH) pass = false;
+
+  digitalWrite(51, LOW); digitalWrite(48, LOW); if (digitalRead(49) != LOW) pass = false;
+  digitalWrite(51, LOW); digitalWrite(48, HIGH); if (digitalRead(49) != HIGH) pass = false;
+  digitalWrite(51, HIGH); digitalWrite(48, LOW); if (digitalRead(49) != HIGH) pass = false;
+  digitalWrite(51, HIGH); digitalWrite(48, HIGH); if (digitalRead(49) != HIGH) pass = false;  
+
+  digitalWrite(22, LOW); digitalWrite(23, LOW); if (digitalRead(24) != LOW) pass = false;
+  digitalWrite(22, LOW); digitalWrite(23, HIGH); if (digitalRead(24) != HIGH) pass = false;
+  digitalWrite(22, HIGH); digitalWrite(23, LOW); if (digitalRead(24) != HIGH) pass = false;
+  digitalWrite(22, HIGH); digitalWrite(23, HIGH); if (digitalRead(24) != HIGH) pass = false;
+
+  digitalWrite(25, LOW); digitalWrite(26, LOW); if (digitalRead(27) != LOW) pass = false;
+  digitalWrite(25, LOW); digitalWrite(26, HIGH); if (digitalRead(27) != HIGH) pass = false;
+  digitalWrite(25, HIGH); digitalWrite(26, LOW); if (digitalRead(27) != HIGH) pass = false;
+  digitalWrite(25, HIGH); digitalWrite(26, HIGH); if (digitalRead(27) != HIGH) pass = false;
+  // Other gates in the 7432 would follow similar logic, updating pin numbers
+
+  lcd.print(pass ? "7432: PASS" : "7432: FAIL");
+}
+
+// Logic test functions for each IC in the 4000 series
+
+// 4001 - Quad 2-input NOR gate
+void test4001() {
+  lcd.setCursor(0, 1);
+  bool pass = true;
+
+  // Gate 1 (Pins: A=1, B=2, Y=3)
+  pinMode(1, OUTPUT);
+  pinMode(2, OUTPUT);
+  pinMode(3, INPUT);
+
+  digitalWrite(1, LOW); digitalWrite(2, LOW); if (digitalRead(3) != HIGH) pass = false;
+  digitalWrite(1, LOW); digitalWrite(2, HIGH); if (digitalRead(3) != LOW) pass = false;
+  digitalWrite(1, HIGH); digitalWrite(2, LOW); if (digitalRead(3) != LOW) pass = false;
+  digitalWrite(1, HIGH); digitalWrite(2, HIGH); if (digitalRead(3) != LOW) pass = false;
+
+  lcd.print(pass ? "4001: PASS" : "4001: FAIL");
+}
+
+// 4011 - Quad 2-input NAND gate
+void test4011() {
+  lcd.setCursor(0, 1);
+  bool pass = true;
+
+  // Gate 1 (Pins: A=1, B=2, Y=3)
+  pinMode(1, OUTPUT);
+  pinMode(2, OUTPUT);
+  pinMode(3, INPUT);
+
+  digitalWrite(1, LOW); digitalWrite(2, LOW); if (digitalRead(3) != HIGH) pass = false;
+  digitalWrite(1, LOW); digitalWrite(2, HIGH); if (digitalRead(3) != HIGH) pass = false;
+  digitalWrite(1, HIGH); digitalWrite(2, LOW); if (digitalRead(3) != HIGH) pass = false;
+  digitalWrite(1, HIGH); digitalWrite(2, HIGH); if (digitalRead(3) != LOW) pass = false;
+
+  lcd.print(pass ? "4011: PASS" : "4011: FAIL");
+}
+
+// 4069 - Hex Inverter (NOT gate)
+void test4069() {
+  lcd.setCursor(0, 1);
+  bool pass = true;
+
+  // Inverter 1 (Pins: A=1, Y=2)
+  pinMode(1, OUTPUT);
+  pinMode(2, INPUT);
+
+  digitalWrite(1, LOW); if (digitalRead(2) != HIGH) pass = false;
+  digitalWrite(1, HIGH); if (digitalRead(2) != LOW) pass = false;
+
+  lcd.print(pass ? "4069: PASS" : "4069: FAIL");
+}
+
+// 4071 - Quad 2-input OR gate
+void test4071() {
+  lcd.setCursor(0, 1);
+  bool pass = true;
+
+  // Gate 1 (Pins: A=1, B=2, Y=3)
+  pinMode(1, OUTPUT);
+  pinMode(2, OUTPUT);
+  pinMode(3, INPUT);
+
+  digitalWrite(1, LOW); digitalWrite(2, LOW); if (digitalRead(3) != LOW) pass = false;
+  digitalWrite(1, LOW); digitalWrite(2, HIGH); if (digitalRead(3) != HIGH) pass = false;
+  digitalWrite(1, HIGH); digitalWrite(2, LOW); if (digitalRead(3) != HIGH) pass = false;
+  digitalWrite(1, HIGH); digitalWrite(2, HIGH); if (digitalRead(3) != HIGH) pass = false;
+
+  lcd.print(pass ? "4071: PASS" : "4071: FAIL");
+}
+
+// 4081 - Quad 2-input AND gate
+void test4081() {
+  lcd.setCursor(0, 1);
+  bool pass = true;
+
+  // Gate 1 (Pins: A=1, B=2, Y=3)
+  pinMode(1, OUTPUT);
+  pinMode(2, OUTPUT);
+  pinMode(3, INPUT);
+
+  digitalWrite(1, LOW); digitalWrite(2, LOW); if (digitalRead(3) != LOW) pass = false;
+  digitalWrite(1, LOW); digitalWrite(2, HIGH); if (digitalRead(3) != LOW) pass = false;
+  digitalWrite(1, HIGH); digitalWrite(2, LOW); if (digitalRead(3) != LOW) pass = false;
+  digitalWrite(1, HIGH); digitalWrite(2, HIGH); if (digitalRead(3) != HIGH) pass = false;
+
+  lcd.print(pass ? "4081: PASS" : "4081: FAIL");
+}
+
+// Function to read buttons from the LCD Keypad Shield
+int readLCDButtons() {
+  int adc_key_in = analogRead(buttonPin);
+
+  if (adc_key_in < 50) return btnRIGHT;
+  if (adc_key_in < 195) return btnUP;
+  if (adc_key_in < 380) return btnDOWN;
+  if (adc_key_in < 555) return btnLEFT;
+  if (adc_key_in < 790) return btnSELECT;
+
+  return btnNONE;
+}
